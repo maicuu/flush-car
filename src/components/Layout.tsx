@@ -11,13 +11,14 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  const menuItems = [
-    { name: "Nova Venda", path: "/", icon: <PlusCircle className="h-5 w-5" /> },
-    { name: "Fluxo do Dia", path: "/status", icon: <Activity className="h-5 w-5" /> },
-    { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
-    { name: "Histórico", path: "/historico", icon: <History className="h-5 w-5" /> },
-    { name: "Configurações", path: "/config", icon: <Settings className="h-5 w-5" /> },
-  ];
+  // Altere apenas este bloco dentro do Layout.tsx
+const menuItems = [
+  { name: "Dashboard", path: "/", icon: <LayoutDashboard className="h-5 w-5" /> }, // Dashboard agora é o principal
+  { name: "Nova Venda", path: "/nova-venda", icon: <PlusCircle className="h-5 w-5" /> }, // Nova Venda no caminho certo
+  { name: "Fluxo do Dia", path: "/status", icon: <Activity className="h-5 w-5" /> },
+  { name: "Histórico", path: "/historico", icon: <History className="h-5 w-5" /> },
+  { name: "Configurações", path: "/config", icon: <Settings className="h-5 w-5" /> },
+];
 
   return (
     <div className={darkMode ? "dark" : ""}>
