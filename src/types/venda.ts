@@ -1,3 +1,6 @@
+// src/types/venda.ts
+export type TipoVeiculo = "Carro" | "Moto";
+
 export interface Servico {
   nome: string;
   preco: number;
@@ -10,12 +13,12 @@ export interface Venda {
   cliente: string;
   veiculo: string;
   placa: string;
-  telefone?: string;
+  telefone?: string; // O '?' indica que é opcional
   tipo_veiculo_label: string;
   multiplicador_aplicado: number;
   servicos: Servico[];
   total: number;
   status: 'pendente' | 'lavando' | 'concluido';
-  metodo_pagamento: string; // Adicione esta linha
+  metodo_pagamento: string;
   empresa_slug: string;
 }

@@ -1,28 +1,30 @@
 import { useEffect, useState } from "react";
 import { supabase, APP_SLUG } from "../lib/supabase";
+import { Venda } from "../types/venda"; // Importe o tipo correto
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { MessageCircle, CheckCircle2, Clock, Car } from "lucide-react";
+// Removi o 'Car' que não estava sendo usado para limpar o aviso
+import { MessageCircle, CheckCircle2, Clock } from "lucide-react"; 
 
 export default function StatusDia() {
-  const [vendas, setVendas] = useState<any[]>([]);
-
-  // Função para buscar dados do banco
-  const carregarVendas = async () => {
-    const { data } = await supabase
-      .from('vendas')
-      .select('*')
-      .eq('empresa_slug', APP_SLUG)
-      .order('created_at', { ascending: false });
-    
-    if (data) setVendas(data);
-  };
+  // 1. Trocamos 'any' pelo tipo 'Venda' para segurança
+  const [vendas, setVendas] = useState<Venda[]>([]);
 
   useEffect(() => {
+    // Definimos a função dentro do useEffect para evitar o aviso de renderização em cascata
+    const carregarVendas = async () => {
+      const { data } = await supabase
+        .from('vendas')
+        .select('*')
+        .eq('empresa_slug', APP_SLUG)
+        .order('created_at', { ascending: false });
+      
+      if (data) setVendas(data as unknown as Venda[]);
+    };
+
     carregarVendas();
 
-    // ESCUTA EM TEMPO REAL: Se algo mudar no banco, atualiza a tela
     const channel = supabase
       .channel('vendas-realtime')
       .on('postgres_changes', 
@@ -38,11 +40,11 @@ export default function StatusDia() {
     await supabase.from('vendas').update({ status: novoStatus }).eq('id', id);
   };
 
-  const avisarClienteWpp = (venda: any) => {
+  // 2. Trocamos o 'any' aqui também pelo tipo 'Venda'
+  const avisarClienteWpp = (venda: Venda) => {
     const mensagem = encodeURIComponent(`Olá ${venda.cliente}, seu ${venda.veiculo} está pronto! 🚿`);
     window.open(`https://wa.me/55${venda.telefone}?text=${mensagem}`, "_blank");
   };
-
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex justify-between items-center p-4">
