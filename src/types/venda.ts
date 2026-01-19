@@ -1,19 +1,21 @@
-// src/types/venda.ts
-
 export interface Servico {
   nome: string;
   preco: number;
+  responsavel?: string;
 }
 
 export interface Venda {
   id: string;
-  data: string; // Guardaremos em formato ISO (ex: "2024-05-20T10:00:00")
+  empresa_slug: string; // O novo campo chave
+  data: string;
   cliente: string;
   veiculo: string;
   placa: string;
-  responsavel?: string;
+  telefone?: string;
   servicos: Servico[];
   total: number;
-  metodoPagamento: "pix" | "cartao" | "dinheiro";
-  status: "concluido" | "pendente";
+  metodoPagamento: string;
+  status: 'pendente' | 'em_progresso' | 'concluido';
+  tipo_veiculo_label?: string;
+  multiplicador_aplicado?: number;
 }

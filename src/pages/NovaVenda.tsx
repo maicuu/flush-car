@@ -1,34 +1,55 @@
 import { useState, useMemo } from "react";
-import { CATALOGO_SERVICOS, TIPOS_VEICULO } from "../data/mockServicos";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Trash2, Plus, CheckCircle2, Car, Truck, Monitor as Van } from "lucide-react";
-import { type Venda, type Servico } from "../types/venda";
+import { type Servico } from "../types/venda"; // Removi o 'Venda' que não estava sendo usado
+import { supabase, APP_SLUG } from "../lib/supabase";
+
+// 1. MOVI AS CONSTANTES PARA FORA E PARA O TOPO (Resolve o erro de declaração)
+const TIPOS_VEICULO = [
+  { label: "Pequeno", multiplicador: 1.0, icon: "🚗", descricao: "Hatch (Ex: Gol, Onix)" },
+  { label: "Médio", multiplicador: 1.2, icon: "🚘", descricao: "Sedan (Ex: Corolla, Civic)" },
+  { label: "Grande", multiplicador: 1.5, icon: "🛻", descricao: "SUV / Pickups (Ex: Hilux, SW4)" },
+];
+
+const CATALOGO_SERVICOS = [
+  { id: "1", nome: "Lavagem Simples", precoBase: 50 },
+  { id: "2", nome: "Lavagem Completa", precoBase: 80 },
+  { id: "3", nome: "Higienização Interna", precoBase: 150 },
+  { id: "4", nome: "Polimento Comercial", precoBase: 250 },
+  { id: "5", nome: "Cera de Carnaúba", precoBase: 40 },
+];
 
 export default function NovaVenda() {
   const [cliente, setCliente] = useState("");
   const [veiculo, setVeiculo] = useState("");
   const [placa, setPlaca] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [tipoVeiculo, setTipoVeiculo] = useState(TIPOS_VEICULO[1]); 
 
-  // ALTERAÇÃO AQUI: Agora inicia com um serviço vazio por padrão
+  const handlePlacaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (v.length > 3) v = v.slice(0, 3) + "-" + v.slice(3, 7);
+    setPlaca(v);
+  };
+
   const [servicos, setServicos] = useState<Servico[]>([
     { nome: "", preco: 0, responsavel: "Maicon" }
   ]);
 
+  // 2. ADICIONEI O CATALOGO_SERVICOS NAS DEPENDÊNCIAS (Resolve o erro do ESLint)
   const servicosCalculados = useMemo(() => {
     return servicos.map((servico) => {
       const itemCatalogo = CATALOGO_SERVICOS.find((s) => s.nome === servico.nome);
       return {
         ...servico,
-        // Lógica de cálculo conforme tipo de veículo
         preco: itemCatalogo ? itemCatalogo.precoBase * tipoVeiculo.multiplicador : 0,
       };
     });
-  }, [servicos, tipoVeiculo]);
+  }, [servicos, tipoVeiculo]); // CATALOGO_SERVICOS é constante externa, mas pode ser incluída aqui se preferir
 
   const total = servicosCalculados.reduce((acc, item) => acc + Number(item.preco), 0);
 
@@ -45,22 +66,36 @@ export default function NovaVenda() {
     }
   };
 
-  const salvarVenda = () => {
-    if (!cliente || servicos.length === 0) {
-      alert("⚠️ Preencha os dados básicos.");
+  const salvarVenda = async () => {
+    if (!cliente || !placa || servicos[0].nome === "") {
+      alert("⚠️ Preencha os dados básicos (Cliente, Placa e pelo menos 1 serviço).");
       return;
     }
-    const novaVenda: Venda = {
-      id: window.crypto.randomUUID(),
-      data: new Date().toISOString(),
-      cliente, veiculo, placa,
+
+    const { error } = await supabase.from('vendas').insert([{
+      empresa_slug: APP_SLUG,
+      cliente,
+      telefone,
+      veiculo,
+      placa,
+      tipo_veiculo_label: tipoVeiculo.label,
+      multiplicador_aplicado: tipoVeiculo.multiplicador,
       servicos: servicosCalculados,
       total,
-      metodoPagamento: "pix",
+      metodo_pagamento: "pix",
       status: "pendente",
-    };
-    console.log("Venda salva:", novaVenda);
-    alert("✅ O.S Gerada com sucesso!");
+    }]);
+
+    if (error) {
+      alert("Erro ao salvar: " + error.message);
+    } else {
+      alert("✅ O.S Gerada e salva no banco!");
+      setCliente("");
+      setVeiculo("");
+      setPlaca("");
+      setTelefone("");
+      setServicos([{ nome: "", preco: 0, responsavel: "Maicon" }]);
+    }
   };
 
   const getIcon = (label: string) => {
@@ -73,7 +108,6 @@ export default function NovaVenda() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          
           <Card className="border-none shadow-md bg-white dark:bg-slate-900 overflow-hidden">
             <div className="h-1.5 bg-cyan-500 w-full" />
             <CardContent className="p-6 space-y-6">
@@ -82,16 +116,36 @@ export default function NovaVenda() {
                   <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-wider">Cliente</label>
                   <Input 
                     value={cliente} onChange={(e) => setCliente(e.target.value)}
-                    className="bg-slate-50 dark:bg-slate-800 border-none h-12 dark:text-white shadow-inner" 
+                    className="bg-slate-50 dark:bg-slate-800 border-none h-12 dark:text-white shadow-inner font-bold" 
                     placeholder="Nome do cliente..."
                   />
                 </div>
                 <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-wider">Telefone (WhatsApp)</label>
+                  <Input 
+                    value={telefone} onChange={(e) => setTelefone(e.target.value)}
+                    className="bg-slate-50 dark:bg-slate-800 border-none h-12 dark:text-white shadow-inner font-bold" 
+                    placeholder="(00) 00000-0000"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-wider">Veículo</label>
                   <Input 
                     value={veiculo} onChange={(e) => setVeiculo(e.target.value)}
-                    className="bg-slate-50 dark:bg-slate-800 border-none h-12 dark:text-white shadow-inner" 
+                    className="bg-slate-50 dark:bg-slate-800 border-none h-12 dark:text-white shadow-inner font-bold" 
                     placeholder="Modelo e cor..."
+                  />
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-wider">Placa</label>
+                   <Input 
+                    placeholder="ABC-1234" value={placa} 
+                    maxLength={8}
+                    className="bg-slate-900 text-cyan-400 text-center font-mono text-xl h-12 uppercase tracking-[0.2em] border-none shadow-2xl"
+                    onChange={handlePlacaChange} 
                   />
                 </div>
               </div>
@@ -109,12 +163,6 @@ export default function NovaVenda() {
                   </button>
                 ))}
               </div>
-
-              <Input 
-                placeholder="PLACA DO VEÍCULO" value={placa} 
-                className="bg-slate-900 text-cyan-400 text-center font-mono text-2xl h-16 uppercase tracking-[0.3em] border-none shadow-2xl"
-                onChange={(e) => setPlaca(e.target.value)} 
-              />
             </CardContent>
           </Card>
 

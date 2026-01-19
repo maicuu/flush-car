@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { 
   Car, LayoutDashboard, History, PlusCircle, 
-  Settings, Moon, Sun, Menu, X, LogOut 
+  Settings, Moon, Sun, Menu, X, LogOut, Activity 
 } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -13,6 +13,7 @@ export default function Layout() {
 
   const menuItems = [
     { name: "Nova Venda", path: "/", icon: <PlusCircle className="h-5 w-5" /> },
+    { name: "Fluxo do Dia", path: "/status", icon: <Activity className="h-5 w-5" /> },
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { name: "Histórico", path: "/historico", icon: <History className="h-5 w-5" /> },
     { name: "Configurações", path: "/config", icon: <Settings className="h-5 w-5" /> },
@@ -66,7 +67,7 @@ export default function Layout() {
         {/* CONTEÚDO PRINCIPAL */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
           
-          {/* CABEÇALHO (O que você adorou) */}
+          {/* CABEÇALHO */}
           <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-40">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X /> : <Menu />}
@@ -93,7 +94,7 @@ export default function Layout() {
                   <p className="text-xs font-bold dark:text-white">Admin Flush</p>
                   <p className="text-[10px] text-cyan-500 font-bold">Gerente</p>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600">
+                <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600 font-sans">
                   AD
                 </div>
               </div>
@@ -101,7 +102,7 @@ export default function Layout() {
           </header>
 
           {/* ONDE AS PÁGINAS APARECEM */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-950 p-6">
             <Outlet /> 
           </div>
         </main>
