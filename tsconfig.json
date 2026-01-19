@@ -1,7 +1,17 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsconfig.app.tsbuildinfo",
+    "target": "ESNext",
+    "jsx": "react-jsx",
+    "useDefineForClassFields": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".", // 👈 Adicione isso: diz que a base é a raiz do projeto
+    "paths": {
+      "@/*": ["./src/*"] // 👈 Adicione isso: o famoso "apelido"
+    },
+    // ... restante das suas configurações
+  }
 }
