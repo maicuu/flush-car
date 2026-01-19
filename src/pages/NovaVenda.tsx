@@ -15,27 +15,35 @@ export default function NovaVenda() {
   const [cliente, setCliente] = useState("");
   const [veiculo, setVeiculo] = useState("");
   const [placa, setPlaca] = useState("");
-  const [servicos, setServicos] = useState<Servico[]>([{ nome: "", preco: 0 }]);
+  
+  // Apenas UMA declaração de serviços
+  const [servicos, setServicos] = useState<Servico[]>([
+    { nome: "", preco: 0, responsavel: "Maicon" }
+  ]);
 
-  // 2. SOLUÇÃO PERFORMANCE: Calculamos direto aqui, sem useEffect!
-  // Isso remove o erro de "cascading renders"
+  // Cálculo do total
   const total = servicos.reduce((acc, item) => acc + Number(item.preco), 0);
 
+  // FUNÇÃO QUE ESTAVA FALTANDO:
   const adicionarServico = () => {
-    setServicos([...servicos, { nome: "", preco: 0 }]);
+    setServicos([...servicos, { nome: "", preco: 0, responsavel: "Maicon" }]);
   };
 
   const atualizarServico = (index: number, campo: keyof Servico, valor: string | number) => {
-    const novosServicos = [...servicos];
-    novosServicos[index] = { ...novosServicos[index], [campo]: valor };
-    setServicos(novosServicos);
+  const novosServicos = [...servicos];
+  
+  // Criamos um novo objeto combinando o antigo com a nova informação
+  // O [campo]: valor diz ao JS: "atualize a chave que vier na variável 'campo'"
+  novosServicos[index] = { 
+    ...novosServicos[index], 
+    [campo]: valor 
   };
+  
+  setServicos(novosServicos);
+};
 
   const salvarVenda = () => {
-    // 1. Geramos o ID primeiro, fora do objeto.
-    // O crypto.randomUUID() é o padrão moderno para IDs únicos.
     const novoId = window.crypto.randomUUID();
-
     const novaVenda: Venda = {
       id: novoId, 
       data: new Date().toISOString(),
@@ -47,7 +55,6 @@ export default function NovaVenda() {
       metodoPagamento: "pix",
       status: "pendente",
     };
-
     console.log("Venda salva:", novaVenda);
     alert("Venda registrada com sucesso!");
   };
@@ -90,29 +97,76 @@ export default function NovaVenda() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Serviços e Taxas</CardTitle>
-          <Button variant="outline" size="sm" onClick={adicionarServico}>+ Adicionar Serviço</Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {servicos.map((servico, index) => (
-            <div key={index} className="flex gap-4">
-              <Input 
-                className="flex-1" 
-                placeholder="Descrição" 
-                value={servico.nome}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => atualizarServico(index, "nome", e.target.value)}
-              />
-              <Input 
-                className="w-[150px]" 
-                type="number" 
-                placeholder="R$ 0,00" 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => atualizarServico(index, "preco", parseFloat(e.target.value) || 0)}
-              />
+  <CardHeader className="flex flex-row items-center justify-between">
+    <CardTitle>Serviços Realizados</CardTitle>
+    {/* Botão de + para adicionar nova linha de serviço */}
+    <Button variant="outline" size="sm" onClick={adicionarServico}>
+      + Novo Serviço
+    </Button>
+  </CardHeader>
+  
+  <CardContent className="space-y-6">
+    {servicos.map((servico, index) => (
+      <div key={index} className="flex flex-col gap-3 p-4 border rounded-lg bg-white shadow-sm">
+        
+        {/* PASSO 1: Escolher o serviço e preço */}
+        <div className="flex gap-4">
+          <Input 
+            className="flex-1" 
+            placeholder="Ex: Lavagem Americana" 
+            value={servico.nome}
+            onChange={(e) => atualizarServico(index, "nome", e.target.value)}
+          />
+          <Input 
+            className="w-[120px]" 
+            type="number" 
+            placeholder="R$ 0,00" 
+            onChange={(e) => atualizarServico(index, "preco", parseFloat(e.target.value) || 0)}
+          />
+        </div>
+
+        {/* PASSO 2: Colocar quem fez (Seleção por Avatar) */}
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-semibold text-muted-foreground uppercase">Quem fez:</span>
+          <div className="flex gap-3">
+            {/* Avatar Maicon */}
+            <div 
+              className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${servico.responsavel === 'Maicon' ? 'opacity-100 scale-110' : 'opacity-40 grayscale'}`}
+              onClick={() => atualizarServico(index, "responsavel", "Maicon")}
+            >
+              <Avatar className="h-10 w-10 border-2 border-blue-500">
+                <AvatarFallback>M</AvatarFallback>
+              </Avatar>
+              <span className="text-[10px] font-bold">MAICON</span>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+
+            {/* Avatar Luiz */}
+            <div 
+              className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${servico.responsavel === 'Luiz' ? 'opacity-100 scale-110' : 'opacity-40 grayscale'}`}
+              onClick={() => atualizarServico(index, "responsavel", "Luiz")}
+            >
+              <Avatar className="h-10 w-10 border-2 border-green-500">
+                <AvatarFallback>L</AvatarFallback>
+              </Avatar>
+              <span className="text-[10px] font-bold">LUIZ</span>
+            </div>
+
+            {/* Avatar Felipe */}
+            <div 
+              className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${servico.responsavel === 'Felipe' ? 'opacity-100 scale-110' : 'opacity-40 grayscale'}`}
+              onClick={() => atualizarServico(index, "responsavel", "Felipe")}
+            >
+              <Avatar className="h-10 w-10 border-2 border-orange-500">
+                <AvatarFallback>F</AvatarFallback>
+              </Avatar>
+              <span className="text-[10px] font-bold">FELIPE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </CardContent>
+</Card>
 
       <Button className="w-full h-12 text-lg" onClick={salvarVenda}>Finalizar Venda</Button>
     </div>

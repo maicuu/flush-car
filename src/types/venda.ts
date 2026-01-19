@@ -11,6 +11,7 @@ export interface Venda {
   cliente: string;
   veiculo: string;
   placa: string;
+  responsavel?: string;
   servicos: Servico[];
   total: number;
   metodoPagamento: "pix" | "cartao" | "dinheiro";
