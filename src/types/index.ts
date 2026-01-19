@@ -22,4 +22,4 @@ export interface Sale {
   total: number;
   status: 'pendente' | 'concluido' | 'cancelado';
   createdAt: Date;
-}
+}                                         

@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+// src/types/venda.ts
+export type TipoVeiculo = "Carro" | "Moto";
+
+=======
+>>>>>>> 60eb2ab61abd1ec5b3d1e9925bfdeaf43365d3e0
 export interface Servico {
   nome: string;
   preco: number;
@@ -10,6 +16,7 @@ export interface Venda {
   data: string;
   cliente: string;
   veiculo: string;
+  modelo: string;
   placa: string;
 <<<<<<< HEAD
 =======
