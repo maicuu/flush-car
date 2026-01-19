@@ -3,7 +3,11 @@ import Layout from "./components/Layout";
 import NovaVenda from "./pages/NovaVenda";
 import Historico from "./pages/Historico";
 import StatusDia from "./pages/StatusDia";
+<<<<<<< HEAD
+// import Dashboard from "./pages/Dashboard";
+=======
 import Dashboard from "./pages/Dashboard";
+>>>>>>> d69da7feea223e7d96d2c58f7af26a73641afd18
 import Configuracoes from "./pages/Configuracoes";
 
 function App() {
