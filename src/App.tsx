@@ -3,21 +3,35 @@ import Layout from "./components/Layout";
 import NovaVenda from "./pages/NovaVenda";
 <<<<<<< HEAD
 import Configuracoes from "./pages/Configuracoes"; // 1. Importe a nova página
+import Dashboard from './pages/Dashboard'
+import StatusDia from "./pages/StatusDia"; // Importando sua nova página
+
+=======
+<<<<<<< HEAD
+import Configuracoes from "./pages/Configuracoes"; // 1. Importe a nova página
 import Historico from "./pages/Historico";
 =======
 import StatusDia from "./pages/StatusDia"; // Importando sua nova página
 import Configuracoes from "./pages/Configuracoes";
 >>>>>>> 60eb2ab61abd1ec5b3d1e9925bfdeaf43365d3e0
+>>>>>>> c75357a7b7f12ee20199d9d53c2224ca96a3e141
 
 function App() {
   return (
     <Router>
       <Routes>
 <<<<<<< HEAD
+        <Route path="/" element={<NovaVenda />} />
+        {/* 2. Adicione a rota para configurações */}
+        <Route path="/config" element={<Configuracoes />} />
+        <Route path="/dash" element={<Dashboard />} />
+=======
+<<<<<<< HEAD
         <Route path="/" element={<Historico />} />
         {/* 2. Adicione a rota para configurações */}
         <Route path="/config" element={<Configuracoes />} />
 =======
+>>>>>>> c75357a7b7f12ee20199d9d53c2224ca96a3e141
         {/* O Layout envolve todas as rotas dentro dele */}
         <Route element={<Layout />}>
           {/* Rota principal: Nova Venda (onde você está trabalhando) */}
