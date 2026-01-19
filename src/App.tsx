@@ -1,11 +1,14 @@
-import NovaVenda from "./pages/NovaVenda";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import NovaVenda from "./pages/NovaVenda"; // O caminho correto baseado na sua estrutura
 
 function App() {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Aqui é onde sua página vai aparecer */}
-      <NovaVenda />
-    </div>
+    <Router>
+      <Routes>
+        {/* Definimos que a página de Nova Venda é a principal */}
+        <Route path="/" element={<NovaVenda />} />
+      </Routes>
+    </Router>
   );
 }
 
