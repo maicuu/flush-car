@@ -1,4 +1,5 @@
 // src/types/venda.ts
+export type TipoVeiculo = "Carro" | "Moto";
 
 export interface Servico {
   nome: string;
@@ -10,6 +11,7 @@ export interface Venda {
   data: string; // Guardaremos em formato ISO (ex: "2024-05-20T10:00:00")
   cliente: string;
   veiculo: string;
+  modelo: string;
   placa: string;
   responsavel?: string;
   servicos: Servico[];
