@@ -2,191 +2,187 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import { supabase, APP_SLUG } from "../lib/supabase";
 import type { Venda, Servico } from "../types/venda";
 import { FiltrosHistorico } from "../components/FiltrosHistorico";
-import { VendaCard } from "../components/VendaCard";
-import { Card, CardContent } from "../components/ui/card";
-import { DollarSign, Car, Calendar as CalendarIcon, Download } from "lucide-react";
+// ATENÇÃO: Verifique se o caminho abaixo é ../components/VendaCard 
+// ou ../components/ui/VendaCard dependendo de onde você salvou o arquivo
+import { VendaCard } from "../components/ui/VendaCard"; 
+import { DollarSign, Car, BarChart3, SearchX, Download } from "lucide-react";
 
 const POR_PAGINA = 8;
 
 export default function Historico() {
   const [vendas, setVendas] = useState<Venda[]>([]);
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState("");
-  const [responsavel, setResponsavel] = useState("");
-  const [status, setStatus] = useState("");
-  const [busca, setBusca] = useState("");
+  const [filtros, setFiltros] = useState({
+    data: "",
+    responsavel: "",
+    status: "",
+    busca: ""
+  });
   const [pagina, setPagina] = useState(1);
 
-  // Lista de responsáveis para o filtro
   const responsaveis = ["MAICON", "LUIZ", "FELIPE"];
 
   const carregarHistorico = useCallback(async () => {
     try {
       setLoading(true);
-      const { data: dadosSupabase, error } = await supabase
+      const { data: dados, error } = await supabase
         .from('vendas')
         .select('*')
         .eq('empresa_slug', APP_SLUG)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setVendas((dadosSupabase as Venda[]) || []);
-    } catch (error: any) {
-      console.error("Erro ao carregar histórico:", error.message);
+      setVendas((dados as Venda[]) || []);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Erro na busca:", err.message);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
+  useEffect(() => { carregarHistorico(); }, [carregarHistorico]);
+
+  // RESET DE PÁGINA: Sempre que filtrar algo, volta para a página 1
   useEffect(() => {
-    carregarHistorico();
-  }, [carregarHistorico]);
+    setPagina(1);
+  }, [filtros]);
 
   const filtradas = useMemo(() => {
     return vendas.filter(v => {
-      const dataVenda = v.created_at || ""; 
-      return (
-        (!data || dataVenda.startsWith(data)) &&
-        (!responsavel || v.servicos?.some((s: Servico) => s.responsavel === responsavel)) &&
-        (!status || v.status === status) &&
-        (!busca || 
-          v.cliente.toLowerCase().includes(busca.toLowerCase()) || 
-          v.placa.toLowerCase().includes(busca.toLowerCase()) ||
-          v.veiculo.toLowerCase().includes(busca.toLowerCase()))
+      // Filtro de Data
+      const matchData = !filtros.data || v.created_at?.startsWith(filtros.data);
+      
+      // Filtro de Responsável
+      const matchResp = !filtros.responsavel || v.servicos?.some((s: Servico) => 
+        s.responsavel?.toUpperCase() === filtros.responsavel.toUpperCase()
       );
+      
+      // Filtro de Status
+      const matchStatus = !filtros.status || v.status === filtros.status;
+      
+      // Filtro de Busca Global (Cliente, Placa, Veículo e Método de Pagamento)
+      const buscaLower = filtros.busca.toLowerCase();
+      const matchBusca = !filtros.busca || 
+        [v.cliente, v.placa, v.veiculo, v.metodo_pagamento]
+          .some(field => field?.toLowerCase().includes(buscaLower));
+      
+      return matchData && matchResp && matchStatus && matchBusca;
     });
-  }, [vendas, data, responsavel, status, busca]);
+  }, [vendas, filtros]);
 
-  const stats = useMemo(() => ({
-    faturado: filtradas.reduce((acc, v) => acc + Number(v.total), 0),
-    totalVendas: filtradas.length,
-    mediaPorVenda: filtradas.length ? (filtradas.reduce((acc, v) => acc + Number(v.total), 0) / filtradas.length) : 0
-  }), [filtradas]);
+  const stats = useMemo(() => {
+    const total = filtradas.reduce((acc, v) => acc + Number(v.total), 0);
+    return {
+      faturado: total,
+      qtd: filtradas.length,
+      ticket: filtradas.length ? total / filtradas.length : 0
+    };
+  }, [filtradas]);
 
   const totalPaginas = Math.ceil(filtradas.length / POR_PAGINA) || 1;
   const vendasPaginadas = filtradas.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA);
 
   const exportarCSV = () => {
-    const csv = [
-      ["Data", "Cliente", "Veículo", "Placa", "Total", "Status"],
-      ...filtradas.map(v => [
-        v.created_at ? new Date(v.created_at).toLocaleDateString() : "",
-        v.cliente,
-        v.veiculo,
-        v.placa,
-        v.total,
-        v.status
-      ])
-    ].map(l => l.join(";")).join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `relatorio-flush-car.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const headers = "Data;Cliente;Veiculo;Placa;Metodo;Total;Status\n";
+    const rows = filtradas.map(v => (
+      `${new Date(v.created_at || '').toLocaleDateString()};${v.cliente};${v.veiculo};${v.placa};${v.metodo_pagamento || 'N/A'};${v.total};${v.status}`
+    )).join("\n");
+    
+    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `relatorio-flush-car.csv`);
+    link.click();
   };
 
   return (
-    <div className="space-y-8 pb-10">
-      {/* HEADER E STATS */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="max-w-7xl mx-auto space-y-6 pb-12 p-4">
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
-            Histórico <span className="text-cyan-500">Geral</span>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
+            Fluxo <span className="text-cyan-500 text-not-italic text-2xl">HISTÓRICO</span>
           </h1>
-          <p className="text-slate-500 text-sm font-medium">Gerencie e exporte todos os seus serviços realizados</p>
+          <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.3em] mt-1">
+            {stats.qtd} Registros Encontrados
+          </p>
         </div>
         
         <button 
           onClick={exportarCSV}
-          className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-5 py-2.5 rounded-2xl font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
+          className="group flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black text-xs tracking-widest transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
         >
-          <Download className="h-4 w-4" /> Exportar Relatório
+          <Download className="w-4 h-4" /> EXPORTAR RELATÓRIO
         </button>
       </div>
 
-      {/* MINI STATS CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* STATS CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: "Total Faturado", value: `R$ ${stats.faturado.toFixed(2)}`, icon: <DollarSign />, color: "text-emerald-500" },
-          { label: "Serviços", value: stats.totalVendas, icon: <Car />, color: "text-cyan-500" },
-          { label: "Ticket Médio", value: `R$ ${stats.mediaPorVenda.toFixed(2)}`, icon: <CalendarIcon />, color: "text-purple-500" },
+          { label: "Faturado", val: `R$ ${stats.faturado.toFixed(2)}`, icon: <DollarSign />, color: "bg-emerald-50 text-emerald-600" },
+          { label: "Serviços", val: stats.qtd, icon: <Car />, color: "bg-cyan-50 text-cyan-600" },
+          { label: "Ticket Médio", val: `R$ ${stats.ticket.toFixed(2)}`, icon: <BarChart3 />, color: "bg-purple-50 text-purple-600" }
         ].map((s, i) => (
-          <Card key={i} className="border-none shadow-sm bg-white dark:bg-slate-900">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={`p-3 rounded-xl bg-slate-50 dark:bg-slate-800 ${s.color}`}>{s.icon}</div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{s.label}</p>
-                <p className="text-xl font-black dark:text-white leading-none">{s.value}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] flex items-center gap-5 border border-slate-50 dark:border-slate-800 shadow-sm">
+            <div className={`h-14 w-14 rounded-2xl flex items-center justify-center text-2xl ${s.color}`}>
+              {s.icon}
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{s.label}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{s.val}</p>
+            </div>
+          </div>
         ))}
       </div>
 
       <FiltrosHistorico
-        data={data}
-        responsavel={responsavel}
-        status={status}
-        busca={busca}
+        data={filtros.data}
+        responsavel={filtros.responsavel}
+        status={filtros.status}
+        busca={filtros.busca}
         responsaveis={responsaveis}
-        onDataChange={setData}
-        onResponsavelChange={setResponsavel}
-        onStatusChange={setStatus}
-        onBuscaChange={setBusca}
+        onDataChange={(val) => setFiltros(f => ({...f, data: val}))}
+        onResponsavelChange={(val) => setFiltros(f => ({...f, responsavel: val}))}
+        onStatusChange={(val) => setFiltros(f => ({...f, status: val}))}
+        onBuscaChange={(val) => setFiltros(f => ({...f, busca: val}))}
         onExportar={exportarCSV}
       />
 
-      {/* LISTAGEM */}
-      <div className="space-y-3">
+      {/* LISTAGEM - Onde o VendaCard aparece */}
+      <div className="space-y-4">
         {loading ? (
-          <div className="animate-pulse space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-            ))}
+          <div className="grid gap-4 animate-pulse">
+            {[1,2,3,4].map(i => <div key={i} className="h-40 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800" />)}
           </div>
-        ) : vendasPaginadas.length > 0 ? (
+        ) : filtradas.length > 0 ? (
           vendasPaginadas.map(v => <VendaCard key={v.id} venda={v} />)
         ) : (
-          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[2rem] border-2 border-dashed border-slate-100 dark:border-slate-800">
-             <p className="text-slate-400 font-bold italic">Nenhum registro encontrado...</p>
+          <div className="text-center py-32 bg-slate-50 dark:bg-slate-900/50 rounded-[3rem] border-4 border-dashed border-slate-100 dark:border-slate-800">
+            <SearchX className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+            <h3 className="text-slate-400 font-black uppercase italic tracking-tighter text-xl">Nenhum resultado</h3>
           </div>
         )}
       </div>
 
-      {/* PAGINAÇÃO MODERNA */}
+      {/* PAGINAÇÃO */}
       {totalPaginas > 1 && (
-        <div className="flex justify-center items-center gap-4 mt-8">
-          <button
+        <div className="flex justify-center gap-3 mt-10">
+          <button 
             disabled={pagina === 1}
-            onClick={() => { setPagina(p => p - 1); window.scrollTo(0, 0); }}
-            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 disabled:opacity-20 hover:bg-white dark:hover:bg-slate-900 transition-all font-bold text-sm text-slate-600 dark:text-slate-400"
+            onClick={() => { setPagina(p => p - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="h-14 px-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 font-black text-xs uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-slate-50"
           >
             Anterior
           </button>
-          
-          <div className="flex gap-2">
-             {Array.from({ length: totalPaginas }).map((_, i) => (
-               <button 
-                key={i}
-                onClick={() => setPagina(i + 1)}
-                className={`h-10 w-10 rounded-xl text-sm font-bold transition-all ${
-                  pagina === i + 1 
-                  ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30' 
-                  : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
-                }`}
-               >
-                 {i + 1}
-               </button>
-             ))}
+          <div className="h-14 flex items-center px-6 bg-slate-900 text-white rounded-2xl font-black">
+            {pagina} / {totalPaginas}
           </div>
-
-          <button
+          <button 
             disabled={pagina === totalPaginas}
-            onClick={() => { setPagina(p => p + 1); window.scrollTo(0, 0); }}
-            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 disabled:opacity-20 hover:bg-white dark:hover:bg-slate-900 transition-all font-bold text-sm text-slate-600 dark:text-slate-400"
+            onClick={() => { setPagina(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="h-14 px-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 font-black text-xs uppercase tracking-widest disabled:opacity-30 transition-all hover:bg-slate-50"
           >
             Próxima
           </button>

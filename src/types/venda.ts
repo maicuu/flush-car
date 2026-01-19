@@ -1,31 +1,21 @@
-<<<<<<< HEAD
-// src/types/venda.ts
-export type TipoVeiculo = "Carro" | "Moto";
-
-=======
->>>>>>> 60eb2ab61abd1ec5b3d1e9925bfdeaf43365d3e0
 export interface Servico {
   nome: string;
   preco: number;
-  responsavel?: string;
+  responsavel: string;
 }
 
 export interface Venda {
   id: string;
-  empresa_slug: string; // O novo campo chave
-  data: string;
+  created_at: string;
   cliente: string;
   veiculo: string;
-  modelo: string;
   placa: string;
-<<<<<<< HEAD
-=======
   telefone?: string;
->>>>>>> 60eb2ab61abd1ec5b3d1e9925bfdeaf43365d3e0
+  tipo_veiculo_label: string;
+  multiplicador_aplicado: number;
   servicos: Servico[];
   total: number;
-  metodoPagamento: string;
-  status: 'pendente' | 'em_progresso' | 'concluido';
-  tipo_veiculo_label?: string;
-  multiplicador_aplicado?: number;
+  status: 'pendente' | 'lavando' | 'concluido';
+  metodo_pagamento: string; // Adicione esta linha
+  empresa_slug: string;
 }
