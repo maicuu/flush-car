@@ -1,26 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react"; // Adicionado useEffect
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Trash2, Plus, CheckCircle2, Car, Truck, Monitor as Van } from "lucide-react";
-import { type Servico } from "../types/venda"; // Removi o 'Venda' que não estava sendo usado
+import { type Servico } from "../types/venda";
 import { supabase, APP_SLUG } from "../lib/supabase";
 
-// 1. MOVI AS CONSTANTES PARA FORA E PARA O TOPO (Resolve o erro de declaração)
 const TIPOS_VEICULO = [
   { label: "Pequeno", multiplicador: 1.0, icon: "🚗", descricao: "Hatch (Ex: Gol, Onix)" },
   { label: "Médio", multiplicador: 1.2, icon: "🚘", descricao: "Sedan (Ex: Corolla, Civic)" },
   { label: "Grande", multiplicador: 1.5, icon: "🛻", descricao: "SUV / Pickups (Ex: Hilux, SW4)" },
-];
-
-const CATALOGO_SERVICOS = [
-  { id: "1", nome: "Lavagem Simples", precoBase: 50 },
-  { id: "2", nome: "Lavagem Completa", precoBase: 80 },
-  { id: "3", nome: "Higienização Interna", precoBase: 150 },
-  { id: "4", nome: "Polimento Comercial", precoBase: 250 },
-  { id: "5", nome: "Cera de Carnaúba", precoBase: 40 },
 ];
 
 export default function NovaVenda() {
@@ -28,7 +19,41 @@ export default function NovaVenda() {
   const [veiculo, setVeiculo] = useState("");
   const [placa, setPlaca] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [tipoVeiculo, setTipoVeiculo] = useState(TIPOS_VEICULO[1]); 
+  const [tipoVeiculo, setTipoVeiculo] = useState(TIPOS_VEICULO[1]);
+
+  // --- NOVOS ESTADOS DINÂMICOS ---
+  const [funcionarios, setFuncionarios] = useState<string[]>([]);
+  const [catalogoServicos, setCatalogoServicos] = useState<{ id: string, nome: string, precoBase: number }[]>([]);
+
+  // --- BUSCA DE DADOS NO SUPABASE ---
+  useEffect(() => {
+    async function carregarDados() {
+      // Busca Funcionários
+      const { data: fData } = await supabase
+        .from('lavadores')
+        .select('nome')
+        .eq('empresa_slug', APP_SLUG)
+        .eq('ativo', true);
+      
+      if (fData) setFuncionarios(fData.map(f => f.nome));
+
+      // Busca Serviços
+      const { data: sData } = await supabase
+        .from('servicos')
+        .select('id, nome, preco_hatch') // Usando preco_hatch como precoBase inicial
+        .eq('empresa_slug', APP_SLUG)
+        .eq('ativo', true);
+
+      if (sData) {
+        setCatalogoServicos(sData.map(s => ({
+          id: s.id,
+          nome: s.nome,
+          precoBase: Number(s.preco_hatch)
+        })));
+      }
+    }
+    carregarDados();
+  }, []);
 
   const handlePlacaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -37,28 +62,27 @@ export default function NovaVenda() {
   };
 
   const [servicos, setServicos] = useState<Servico[]>([
-    { nome: "", preco: 0, responsavel: "Maicon" }
+    { nome: "", preco: 0, responsavel: "" } // Começa vazio para pegar o primeiro do banco depois
   ]);
 
-  // 2. ADICIONEI O CATALOGO_SERVICOS NAS DEPENDÊNCIAS (Resolve o erro do ESLint)
   const servicosCalculados = useMemo(() => {
     return servicos.map((servico) => {
-      const itemCatalogo = CATALOGO_SERVICOS.find((s) => s.nome === servico.nome);
+      const itemCatalogo = catalogoServicos.find((s) => s.nome === servico.nome);
       return {
         ...servico,
         preco: itemCatalogo ? itemCatalogo.precoBase * tipoVeiculo.multiplicador : 0,
       };
     });
-  }, [servicos, tipoVeiculo]); // CATALOGO_SERVICOS é constante externa, mas pode ser incluída aqui se preferir
+  }, [servicos, tipoVeiculo, catalogoServicos]); // catalogoServicos adicionado aqui
 
   const total = servicosCalculados.reduce((acc, item) => acc + Number(item.preco), 0);
 
   const adicionarServicoVazio = () => {
-    setServicos([...servicos, { nome: "", preco: 0, responsavel: "Maicon" }]);
+    setServicos([...servicos, { nome: "", preco: 0, responsavel: funcionarios[0] || "" }]);
   };
 
   const selecionarDoCatalogo = (index: number, servicoId: string) => {
-    const item = CATALOGO_SERVICOS.find((s) => s.id === servicoId);
+    const item = catalogoServicos.find((s) => s.id === servicoId);
     if (item) {
       const novos = [...servicos];
       novos[index] = { ...novos[index], nome: item.nome };
@@ -94,7 +118,7 @@ export default function NovaVenda() {
       setVeiculo("");
       setPlaca("");
       setTelefone("");
-      setServicos([{ nome: "", preco: 0, responsavel: "Maicon" }]);
+      setServicos([{ nome: "", preco: 0, responsavel: funcionarios[0] || "" }]);
     }
   };
 
@@ -180,14 +204,14 @@ export default function NovaVenda() {
                     <div className="flex-1 min-w-[200px] space-y-2">
                       <label className="text-[10px] font-bold text-slate-400 uppercase">Trabalho</label>
                       <Select 
-                        value={CATALOGO_SERVICOS.find(s => s.nome === servico.nome)?.id}
+                        value={catalogoServicos.find(s => s.nome === servico.nome)?.id}
                         onValueChange={(val) => selecionarDoCatalogo(index, val)}
                       >
                         <SelectTrigger className="bg-white dark:bg-slate-900 dark:text-white border-slate-200 dark:border-slate-700 h-11">
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent className="bg-white dark:bg-slate-900 dark:text-white">
-                          {CATALOGO_SERVICOS.map(item => (
+                          {catalogoServicos.map(item => (
                             <SelectItem key={item.id} value={item.id}>{item.nome}</SelectItem>
                           ))}
                         </SelectContent>
@@ -205,7 +229,8 @@ export default function NovaVenda() {
                   </div>
 
                   <div className="flex items-center gap-4 pt-3 border-t dark:border-slate-700">
-                    {["Maicon", "Luiz", "Felipe"].map((nome) => (
+                    {/* --- MAP DINÂMICO DE FUNCIONÁRIOS --- */}
+                    {funcionarios.map((nome) => (
                       <div key={nome} className="flex flex-col items-center gap-1">
                         <Avatar onClick={() => {
                           const novos = [...servicos];
