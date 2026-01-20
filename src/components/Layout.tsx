@@ -1,55 +1,79 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { 
-  Car, LayoutDashboard, History, PlusCircle, 
-  Settings, Moon, Sun, Menu, X, LogOut, Activity 
+import {
+  Car, LayoutDashboard, History, PlusCircle,
+  Settings, Moon, Sun, Menu, LogOut, Activity,
+  X
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { Exit } from './ui/arrowExit';
+
 
 export default function Layout() {
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  // Altere apenas este bloco dentro do Layout.tsx
-const menuItems = [
-  { name: "Dashboard", path: "/", icon: <LayoutDashboard className="h-5 w-5" /> }, // Dashboard agora é o principal
-  { name: "Nova Venda", path: "/nova-venda", icon: <PlusCircle className="h-5 w-5" /> }, // Nova Venda no caminho certo
-  { name: "Fluxo do Dia", path: "/status", icon: <Activity className="h-5 w-5" /> },
-  { name: "Histórico", path: "/historico", icon: <History className="h-5 w-5" /> },
-  { name: "Configurações", path: "/config", icon: <Settings className="h-5 w-5" /> },
-];
+  const menuItems = [
+    { name: "Dashboard", path: "/", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { name: "Nova Venda", path: "/nova-venda", icon: <PlusCircle className="h-5 w-5" /> },
+    { name: "Fluxo do Dia", path: "/status", icon: <Activity className="h-5 w-5" /> },
+    { name: "Histórico", path: "/historico", icon: <History className="h-5 w-5" /> },
+    { name: "Configurações", path: "/config", icon: <Settings className="h-5 w-5" /> },
+  ];
 
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex transition-colors duration-300">
-        
-        {/* SIDEBAR LATERAL */}
+
+        {/* 1. CAMADA ESCURA (OVERLAY) - FECHA AO CLICAR FORA */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-[45] lg:hidden backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* 2. SIDEBAR LATERAL */}
         <aside className={`
           fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 
           transform transition-transform duration-300 lg:relative lg:translate-x-0
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}>
           <div className="p-6 flex flex-col h-full">
-            <div className="flex items-center gap-3 mb-10">
-              <div className="bg-cyan-500 p-2 rounded-lg text-white">
-                <Car className="h-6 w-6" />
+
+            {/* LOGO E BOTÃO DE FECHAR (X) */}
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center gap-3">
+                <div className="bg-cyan-500 p-2 rounded-lg text-white">
+                  <Car className="h-6 w-6" />
+                </div>
+                <h1 className="text-xl font-black italic text-slate-900 dark:text-white uppercase tracking-tighter">
+                  FLUSH <span className="text-cyan-500">CAR</span>
+                </h1>
               </div>
-              <h1 className="text-xl font-black italic text-slate-900 dark:text-white uppercase tracking-tighter">
-                FLUSH <span className="text-cyan-500">CAR</span>
-              </h1>
+
+              {/* Botão X para fechar no Mobile */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden text-slate-500"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Exit />
+              </Button>
             </div>
 
             <nav className="flex-1 space-y-2">
               {menuItems.map((item) => (
-                <Link 
-                  key={item.path} 
+                <Link
+                  key={item.path}
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all
-                    ${location.pathname === item.path 
-                      ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/20" 
+                    ${location.pathname === item.path
+                      ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
                       : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}
                   `}
                 >
@@ -65,46 +89,60 @@ const menuItems = [
           </div>
         </aside>
 
-        {/* CONTEÚDO PRINCIPAL */}
+        {/* 3. CONTEÚDO PRINCIPAL */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          
-          {/* CABEÇALHO */}
-          <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-40">
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
-              {sidebarOpen ? <X /> : <Menu />}
+
+          {/* CABEÇALHO (HEADER) QUE ACOMPANHA O TEMA */}
+          <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sticky top-0 z-40 transition-colors duration-300">
+
+            {/* Botão de Menu (Hambúrguer) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
             </Button>
 
+            {/* Título Central (Opcional) */}
             <div className="hidden lg:block">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Painel de Controle</p>
               <h2 className="text-lg font-bold text-slate-800 dark:text-white capitalize">
                 {menuItems.find(i => i.path === location.pathname)?.name || "Sistema"}
               </h2>
             </div>
 
             <div className="flex items-center gap-3">
-              <Button 
-                onClick={() => setDarkMode(!darkMode)} 
-                variant="outline" 
-                size="icon" 
-                className="rounded-full dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+              {/* Botão da Lua/Sol - AGORA COM CORES DARK */}
+              <Button
+                onClick={() => setDarkMode(!darkMode)}
+                variant="outline"
+                size="icon"
+                className="rounded-full border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
               >
-                {darkMode ? <Sun className="h-4 w-4 text-yellow-400" /> : <Moon className="h-4 w-4 text-slate-600" />}
+                {darkMode ? (
+                  <Sun className="h-4 w-4 text-yellow-400" />
+                ) : (
+                  <Moon className="h-4 w-4 text-slate-600" />
+                )}
               </Button>
-              <div className="flex items-center gap-3 pl-3 border-l dark:border-slate-800">
+
+              {/* Perfil do Usuário */}
+              <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-800">
                 <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold dark:text-white">Admin Flush</p>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Admin Flush</p>
                   <p className="text-[10px] text-cyan-500 font-bold">Gerente</p>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600 font-sans">
+                <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300">
                   AD
                 </div>
               </div>
             </div>
           </header>
 
-          {/* ONDE AS PÁGINAS APARECEM */}
+          {/* ÁREA ONDE AS PÁGINAS SÃO RENDERIZADAS */}
           <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-slate-950 p-6">
-            <Outlet /> 
+            <Outlet />
           </div>
         </main>
       </div>
