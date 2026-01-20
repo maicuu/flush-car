@@ -1,5 +1,6 @@
 // O segredo está aqui: ../../ para subir duas pastas
 import { Venda } from "../../types/venda"; 
+import brFlag from "../../assets/br.png";
 import { Clock, CheckCircle2, Droplets, CreditCard, User, Calendar, Hash } from "lucide-react";
 
 export function VendaCard({ venda }: { venda: Venda }) {
@@ -40,29 +41,37 @@ export function VendaCard({ venda }: { venda: Venda }) {
         
         {/* BLOCO 1: IDENTIFICAÇÃO (PLACA E CARRO) */}
         <div className="flex items-center gap-4 min-w-[250px]">
-          <div className="flex flex-col border-[2.5px] border-slate-900 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
-            <div className="bg-blue-600 text-[8px] font-bold text-white px-2 py-0.5 flex justify-between items-center tracking-tighter">
-              <span>BRASIL</span>
-              <div className="w-2 h-1.5 bg-yellow-400 rounded-sm" />
-            </div>
-            <div className="bg-white px-3 py-1 text-center">
-              <span className="text-slate-900 font-black text-lg tracking-tighter uppercase leading-none">
-                {venda.placa}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">
-              {venda.veiculo}
-            </h3>
-            <div className="flex items-center gap-1.5 text-slate-500 font-bold text-sm">
-              <User className="w-3.5 h-3.5 text-cyan-500" />
-              {venda.cliente}
-            </div>
-          </div>
+         <div className="relative flex flex-col border-[2.5px] border-slate-900 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+    
+        {/* Topo azul */}
+        <div className="bg-blue-600 text-[8px] font-bold text-white px-2 py-0.5 flex items-center tracking-tighter">
+          <span>BRASIL</span>
         </div>
-
+        {/* Bandeira na lateral */}
+        <div className="absolute  right-1 w-5 h-4 rounded overflow-hidden border border-white">
+          <img
+            src={brFlag}
+            alt="Brasil"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        {/* Placa */}
+        <div className="bg-white px-3 py-1 text-center">
+          <span className="text-slate-900 font-black text-lg tracking-tighter uppercase leading-none">
+            {venda.placa}
+          </span>
+        </div>
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter leading-none">
+          {venda.veiculo}
+        </h3>
+        <div className="flex items-center gap-1.5 text-slate-500 font-bold text-sm">
+          <User className="w-3.5 h-3.5 text-cyan-500" />
+          {venda.cliente}
+        </div>
+      </div>
+    </div>
         {/* BLOCO 2: SERVIÇOS E RESPONSÁVEIS */}
         <div className="flex-1 flex flex-wrap gap-2 items-center border-y lg:border-y-0 lg:border-x border-slate-50 dark:border-slate-800 py-4 lg:py-0 lg:px-6">
           {venda.servicos.map((s, i) => (

@@ -110,12 +110,12 @@ export default function Historico() {
           </p>
         </div>
         
-        <button 
+        {/* <button 
           onClick={exportarCSV}
           className="group flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 rounded-2xl font-black text-xs tracking-widest transition-all shadow-lg shadow-emerald-500/20 active:scale-95"
         >
           <Download className="w-4 h-4" /> EXPORTAR RELATÓRIO
-        </button>
+        </button> */}
       </div>
 
       {/* STATS CARDS */}

@@ -17,6 +17,7 @@ const menuItems = [
   { name: "Nova Venda", path: "/nova-venda", icon: <PlusCircle className="h-5 w-5" /> }, // Nova Venda no caminho certo
   { name: "Fluxo do Dia", path: "/status", icon: <Activity className="h-5 w-5" /> },
   { name: "Histórico", path: "/historico", icon: <History className="h-5 w-5" /> },
+  { name: "Fechamento", path: "/fechamento", icon: <History className="h-5 w-5" /> },
   { name: "Configurações", path: "/config", icon: <Settings className="h-5 w-5" /> },
 ];
 

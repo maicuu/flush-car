@@ -5,6 +5,8 @@ import Historico from "./pages/Historico";
 import StatusDia from "./pages/StatusDia";
 import Dashboard from "./pages/Dashboard";
 import Configuracoes from "./pages/Configuracoes";
+import Fechamento from "./pages/Fechamento"; 
+
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
           <Route path="/status" element={<StatusDia />} />
           <Route path="/historico" element={<Historico />} />
           <Route path="/config" element={<Configuracoes />} />
+          <Route path="/fechamento" element={<Fechamento />} />
+
         </Route>
 
         {/* Redireciona qualquer rota inexistente para o Dashboard */}
